@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Optical Lenses Price List</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>Lens Brands</h1>
+<div id="brands" class="brands"></div>
+
+<div id="filters" class="hidden">
+  <select id="indexFilter"></select>
+  <select id="coatingFilter"></select>
+</div>
+
+<div id="products" class="grid"></div>
+
+<script>
+fetch('data.json')
+  .then(res => res.json())
+  .then(data => {
+    const brandsDiv = document.getElementById('brands');
+    const productsDiv = document.getElementById('products');
+    const indexFilter = document.getElementById('indexFilter');
+    const coatingFilter = document.getElementById('coatingFilter');
+
+    const brands = [...new Set(data.map(d => d.brand))];
+
+    brands.forEach(b => {
+      const item = data.find(d => d.brand === b);
+      const div = document.createElement('div');
+      div.className = 'brand';
+      div.innerHTML = `<img src="${item.logo}"><p>${b}</p>`;
+      div.onclick = () => showBrand(b);
+      brandsDiv.appendChild(div);
+    });
+
+    function showBrand(brand) {
+      productsDiv.innerHTML = '';
+      document.getElementById('filters').classList.remove('hidden');
+
+      const filtered = data.filter(d => d.brand === brand);
+
+      fillFilters(filtered);
+
+      filtered.forEach(p => {
+        productsDiv.innerHTML += `
+          <div class="card">
+            <strong>${p.lens}</strong>
+            <p>Index: ${p.index}</p>
+            <p>Coating: ${p.coating}</p>
+            <p>${p.price} $</p>
+          </div>`;
+      });
+    }
+
+    function fillFilters(items) {
+      indexFilter.innerHTML = `<option value="">All Index</option>`;
+      coatingFilter.innerHTML = `<option value="">All Coatings</option>`;
+
+      [...new Set(items.map(i => i.index))].forEach(i =>
+        indexFilter.innerHTML += `<option>${i}</option>`
+      );
+
+      [...new Set(items.map(i => i.coating))].forEach(c =>
+        coatingFilter.innerHTML += `<option>${c}</option>`
+      );
+    }
+  });
+</script>
+
+</body>
+</html>

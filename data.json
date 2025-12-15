@@ -1,0 +1,26 @@
+[
+  {
+    "brand": "Zeiss",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Zeiss_logo.svg",
+    "lens": "Single Vision",
+    "index": "1.56",
+    "coating": "Blue Protect",
+    "price": 45
+  },
+  {
+    "brand": "Zeiss",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Zeiss_logo.svg",
+    "lens": "Single Vision",
+    "index": "1.67",
+    "coating": "DuraVision Platinum",
+    "price": 75
+  },
+  {
+    "brand": "Hoya",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/0/02/Hoya_logo.svg",
+    "lens": "Single Vision",
+    "index": "1.60",
+    "coating": "Hi-Vision LongLife",
+    "price": 60
+  }
+]
