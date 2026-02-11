@@ -1,75 +1,125 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>Optical Lenses Price List</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rawand Optical | القائمة الذكية</title>
+    <link rel="apple-touch-icon" href="https://assets.softr-files.com/applications/1332b07e-2803-4ca2-961e-48de84f7f376/assets/c34235fe-b50f-4223-af79-8554e3437b9f.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap');
+        body { font-family: 'Tajawal', sans-serif; background-color: #f8fafc; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .active-tab { background-color: #063356 !important; color: white !important; border-color: #063356 !important; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
 </head>
-<body>
+<body class="pb-20">
 
-<h1>Lens Brands</h1>
-<div id="brands" class="brands"></div>
+    <header class="glass sticky top-0 z-50 border-b border-gray-100 p-4 shadow-sm">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <img src="https://assets.softr-files.com/applications/1332b07e-2803-4ca2-961e-48de84f7f376/assets/c5680a02-6638-4d63-9827-84c7e087b62b.png" class="h-10">
+            <div class="text-left">
+                <h1 class="text-xl font-black text-[#063356]">RAWAND</h1>
+                <p class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Price List</p>
+            </div>
+        </div>
+    </header>
 
-<div id="filters" class="hidden">
-  <select id="indexFilter"></select>
-  <select id="coatingFilter"></select>
-</div>
+    <main class="max-w-4xl mx-auto px-4 mt-6">
+        <input type="text" id="searchInput" placeholder="ابحث في هذه القائمة..." 
+            class="w-full p-4 rounded-2xl border-none shadow-md mb-6 outline-none text-right">
 
-<div id="products" class="grid"></div>
+        <div id="tabsContainer" class="flex gap-2 overflow-x-auto pb-4 no-scrollbar mb-6">
+            </div>
+
+        <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="col-span-full text-center py-20 text-gray-400 font-bold">جاري جلب البيانات...</div>
+        </div>
+    </main>
 
 <script>
-fetch('data.json')
-  .then(res => res.json())
-  .then(data => {
-    const brandsDiv = document.getElementById('brands');
-    const productsDiv = document.getElementById('products');
-    const indexFilter = document.getElementById('indexFilter');
-    const coatingFilter = document.getElementById('coatingFilter');
+    // معرف الشيت الخاص بك
+    const sheetId = '11rfaJLxUx5CIc_znlntQ3udyqPujSAPXFFRFjAsePlk';
+    // أسماء التابات التي تريد عرضها (تأكد أنها تطابق الأسماء في الشيت بالضبط)
+    const brands = ['Zeiss', 'Hoya', 'Nova', 'Divel', 'Synchrony', 'Local Lenses'];
+    
+    let currentData = [];
 
-    const brands = [...new Set(data.map(d => d.brand))];
+    // دالة لجلب البيانات من تابة محددة
+    async function fetchTabData(tabName) {
+        const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${tabName}`;
+        try {
+            const response = await fetch(url);
+            const text = await response.text();
+            const json = JSON.parse(text.substr(47).slice(0, -2));
+            
+            const cols = json.table.cols.map(c => c.label || "Column");
+            const rows = json.table.rows.map(r => {
+                let rowObj = {};
+                r.c.forEach((cell, i) => {
+                    rowObj[cols[i]] = cell ? (cell.v || cell.f || "") : "";
+                });
+                return rowObj;
+            });
+            
+            currentData = rows;
+            renderCards(rows);
+        } catch (e) {
+            console.error("Error:", e);
+        }
+    }
 
-    brands.forEach(b => {
-      const item = data.find(d => d.brand === b);
-      const div = document.createElement('div');
-      div.className = 'brand';
-      div.innerHTML = `<img src="${item.logo}"><p>${b}</p>`;
-      div.onclick = () => showBrand(b);
-      brandsDiv.appendChild(div);
+    function renderCards(data) {
+        const grid = document.getElementById('cardsGrid');
+        grid.innerHTML = data.map(item => {
+            // محاولة إيجاد السعر والاسم ذكياً
+            const keys = Object.keys(item);
+            const priceKey = keys.find(k => k.includes('سعر') || k.toLowerCase().includes('price')) || keys[1];
+            const nameKey = keys.find(k => k.includes('نوع') || k.includes('اسم') || k.toLowerCase().includes('name')) || keys[0];
+
+            return `
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-50 flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="text-lg font-bold text-gray-800">${item[nameKey]}</h3>
+                        <span class="bg-blue-50 text-[#063356] font-black px-3 py-1 rounded-xl">${item[priceKey]} <small>JOD</small></span>
+                    </div>
+                    <div class="space-y-1">
+                        ${keys.filter(k => k !== priceKey && k !== nameKey && item[k]).map(k => `
+                            <p class="text-xs text-gray-500"><b class="text-gray-700">${k}:</b> ${item[k]}</p>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // إنشاء التابات
+    const tabsBox = document.getElementById('tabsContainer');
+    brands.forEach((brand, index) => {
+        const btn = document.createElement('button');
+        btn.innerText = brand;
+        btn.className = `brand-btn whitespace-nowrap px-6 py-2 rounded-full border-2 border-gray-200 font-bold text-sm transition-all ${index === 0 ? 'active-tab' : 'bg-white text-gray-600'}`;
+        btn.onclick = () => {
+            document.querySelectorAll('.brand-btn').forEach(b => b.classList.remove('active-tab'));
+            btn.classList.add('active-tab');
+            fetchTabData(brand);
+        };
+        tabsBox.appendChild(btn);
     });
 
-    function showBrand(brand) {
-      productsDiv.innerHTML = '';
-      document.getElementById('filters').classList.remove('hidden');
+    // البحث
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        const filtered = currentData.filter(row => 
+            Object.values(row).some(val => String(val).toLowerCase().includes(term))
+        );
+        renderCards(filtered);
+    });
 
-      const filtered = data.filter(d => d.brand === brand);
-
-      fillFilters(filtered);
-
-      filtered.forEach(p => {
-        productsDiv.innerHTML += `
-          <div class="card">
-            <strong>${p.lens}</strong>
-            <p>Index: ${p.index}</p>
-            <p>Coating: ${p.coating}</p>
-            <p>${p.price} $</p>
-          </div>`;
-      });
-    }
-
-    function fillFilters(items) {
-      indexFilter.innerHTML = `<option value="">All Index</option>`;
-      coatingFilter.innerHTML = `<option value="">All Coatings</option>`;
-
-      [...new Set(items.map(i => i.index))].forEach(i =>
-        indexFilter.innerHTML += `<option>${i}</option>`
-      );
-
-      [...new Set(items.map(i => i.coating))].forEach(c =>
-        coatingFilter.innerHTML += `<option>${c}</option>`
-      );
-    }
-  });
+    // تحميل أول تابة تلقائياً
+    fetchTabData(brands[0]);
 </script>
-
 </body>
 </html>
