@@ -44,8 +44,21 @@
         grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-400 font-bold">جاري تحميل ' + tabName + '...</div>';
         
         // الرابط السحري لجلب البيانات كـ CSV (أضمن طريقة للربط)
-        const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tabName)}`;
-        
+const url = `https://docs.google.com/spreadsheets/d/${sheetId}/pub?output=csv&gid=${getGid(tabName)}`;
+
+// وأضف هذه الدالة الصغيرة في أسفل الكود قبل إغلاق الـ <script>
+function getGid(name) {
+    const gids = {
+        'Zeiss': '204294561',
+        'Hoya': '1241908852',
+        'Nova': '1613947230',
+        'Divel': '1802967119',
+        'Synchrony': '1249767351',
+        'Local Lenses': '300753051',
+        'Contact Lenses': '1796541571'
+    };
+    return gids[name] || '0';
+}        
         try {
             const response = await fetch(url);
             const data = await response.text();
@@ -121,3 +134,4 @@
 </script>
 </body>
 </html>
+
