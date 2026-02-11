@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rawand Optical | القائمة الذكية</title>
+    <title>Rawand Optical | القائمة الشاملة</title>
     <link rel="apple-touch-icon" href="https://assets.softr-files.com/applications/1332b07e-2803-4ca2-961e-48de84f7f376/assets/c34235fe-b50f-4223-af79-8554e3437b9f.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap');
-        body { font-family: 'Tajawal', sans-serif; background-color: #f8fafc; }
+        body { font-family: 'Tajawal', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
         .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        .active-tab { background-color: #063356 !important; color: white !important; border-color: #063356 !important; }
+        .active-tab { background-color: #063356 !important; color: white !important; transform: scale(1.05); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .lens-card { transition: all 0.2s ease; }
     </style>
 </head>
 <body class="pb-20">
@@ -22,40 +23,50 @@
             <img src="https://assets.softr-files.com/applications/1332b07e-2803-4ca2-961e-48de84f7f376/assets/c5680a02-6638-4d63-9827-84c7e087b62b.png" class="h-10">
             <div class="text-left">
                 <h1 class="text-xl font-black text-[#063356]">RAWAND</h1>
-                <p class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Price List</p>
+                <p class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Price List System</p>
             </div>
         </div>
     </header>
 
     <main class="max-w-4xl mx-auto px-4 mt-6">
-        <input type="text" id="searchInput" placeholder="ابحث في هذه القائمة..." 
-            class="w-full p-4 rounded-2xl border-none shadow-md mb-6 outline-none text-right">
+        <div class="relative mb-6">
+            <input type="text" id="searchInput" placeholder="بحث عن منتج، قياس، أو سعر..." 
+                class="w-full p-4 rounded-2xl border-none shadow-lg outline-none text-right text-lg focus:ring-2 focus:ring-blue-500 transition-all">
+            <span class="absolute left-4 top-4 opacity-30">🔍</span>
+        </div>
 
         <div id="tabsContainer" class="flex gap-2 overflow-x-auto pb-4 no-scrollbar mb-6">
             </div>
 
         <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="col-span-full text-center py-20 text-gray-400 font-bold">جاري جلب البيانات...</div>
+            <div id="loader" class="col-span-full text-center py-20">
+                <div class="animate-spin inline-block w-10 h-10 border-4 border-[#063356] border-t-transparent rounded-full mb-4"></div>
+                <p class="text-gray-400 font-bold">جاري تحميل قائمة الأسعار...</p>
+            </div>
         </div>
     </main>
 
 <script>
-    // معرف الشيت الخاص بك
     const sheetId = '11rfaJLxUx5CIc_znlntQ3udyqPujSAPXFFRFjAsePlk';
-    // أسماء التابات التي تريد عرضها (تأكد أنها تطابق الأسماء في الشيت بالضبط)
-    const brands = ['Zeiss', 'Hoya', 'Nova', 'Divel', 'Synchrony', 'Local Lenses'];
+    
+    // قائمة التابات (تأكد أنها تطابق الأسماء في الشيت بالملي)
+    const tabs = ['Zeiss', 'Hoya', 'Nova', 'Divel', 'Synchrony', 'Local Lenses', 'Contact Lenses'];
     
     let currentData = [];
 
-    // دالة لجلب البيانات من تابة محددة
     async function fetchTabData(tabName) {
-        const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${tabName}`;
+        document.getElementById('cardsGrid').innerHTML = '<div class="col-span-full text-center py-20 text-gray-400 animate-pulse font-bold">جاري جلب بيانات ' + tabName + '...</div>';
+        
+        // استخدام محرك Google Visualization لجلب البيانات كـ JSON
+        const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tabName)}`;
+        
         try {
             const response = await fetch(url);
             const text = await response.text();
-            const json = JSON.parse(text.substr(47).slice(0, -2));
+            // تنظيف الاستجابة لأن جوجل تضع نصاً إضافياً قبل الـ JSON
+            const json = JSON.parse(text.substring(47, text.length - 2));
             
-            const cols = json.table.cols.map(c => c.label || "Column");
+            const cols = json.table.cols.map(c => c.label || "معلومات");
             const rows = json.table.rows.map(r => {
                 let rowObj = {};
                 r.c.forEach((cell, i) => {
@@ -68,26 +79,38 @@
             renderCards(rows);
         } catch (e) {
             console.error("Error:", e);
+            document.getElementById('cardsGrid').innerHTML = '<div class="col-span-full text-center py-20 text-red-400">فشل في تحميل البيانات، تأكد من اتصال الإنترنت.</div>';
         }
     }
 
     function renderCards(data) {
         const grid = document.getElementById('cardsGrid');
+        if (data.length === 0) {
+            grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-400 italic">لا توجد نتائج مطابقة لبحثك</div>';
+            return;
+        }
+
         grid.innerHTML = data.map(item => {
-            // محاولة إيجاد السعر والاسم ذكياً
             const keys = Object.keys(item);
-            const priceKey = keys.find(k => k.includes('سعر') || k.toLowerCase().includes('price')) || keys[1];
-            const nameKey = keys.find(k => k.includes('نوع') || k.includes('اسم') || k.toLowerCase().includes('name')) || keys[0];
+            
+            // محاولة ذكية لإيجاد السعر والاسم
+            const priceKey = keys.find(k => k.includes('سعر') || k.toLowerCase().includes('price') || k.includes('Price')) || keys[1];
+            const nameKey = keys.find(k => k.includes('نوع') || k.includes('اسم') || k.toLowerCase().includes('name') || k.includes('Brand') || k.includes('Product')) || keys[0];
 
             return `
-                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-50 flex flex-col justify-between">
+                <div class="lens-card bg-white p-5 rounded-3xl shadow-sm border border-gray-50 flex flex-col justify-between hover:shadow-md">
                     <div class="flex justify-between items-start mb-3">
-                        <h3 class="text-lg font-bold text-gray-800">${item[nameKey]}</h3>
-                        <span class="bg-blue-50 text-[#063356] font-black px-3 py-1 rounded-xl">${item[priceKey]} <small>JOD</small></span>
+                        <h3 class="text-lg font-bold text-[#063356] max-w-[70%]">${item[nameKey] || 'منتج غير مسمى'}</h3>
+                        <span class="bg-[#eef2ff] text-[#063356] font-black px-3 py-2 rounded-2xl text-sm shadow-sm">
+                            ${item[priceKey] || '--'} <small class="text-[10px]">JOD</small>
+                        </span>
                     </div>
-                    <div class="space-y-1">
-                        ${keys.filter(k => k !== priceKey && k !== nameKey && item[k]).map(k => `
-                            <p class="text-xs text-gray-500"><b class="text-gray-700">${k}:</b> ${item[k]}</p>
+                    <div class="space-y-2 border-t pt-3 mt-auto">
+                        ${keys.filter(k => k !== priceKey && k !== nameKey && item[k] && item[k] !== "").map(k => `
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-gray-400 font-medium">${k}:</span>
+                                <span class="text-gray-700 font-bold">${item[k]}</span>
+                            </div>
                         `).join('')}
                     </div>
                 </div>
@@ -95,21 +118,25 @@
         }).join('');
     }
 
-    // إنشاء التابات
-    const tabsBox = document.getElementById('tabsContainer');
-    brands.forEach((brand, index) => {
-        const btn = document.createElement('button');
-        btn.innerText = brand;
-        btn.className = `brand-btn whitespace-nowrap px-6 py-2 rounded-full border-2 border-gray-200 font-bold text-sm transition-all ${index === 0 ? 'active-tab' : 'bg-white text-gray-600'}`;
-        btn.onclick = () => {
-            document.querySelectorAll('.brand-btn').forEach(b => b.classList.remove('active-tab'));
-            btn.classList.add('active-tab');
-            fetchTabData(brand);
-        };
-        tabsBox.appendChild(btn);
-    });
+    // بناء شريط التابات
+    function setupTabs() {
+        const container = document.getElementById('tabsContainer');
+        tabs.forEach((tab, index) => {
+            const btn = document.createElement('button');
+            btn.innerText = tab === 'Contact Lenses' ? 'عدسات لاصقة 👁️' : tab;
+            btn.className = `brand-btn whitespace-nowrap px-6 py-3 rounded-2xl font-bold text-sm transition-all border-2 border-transparent shadow-sm ${index === 0 ? 'active-tab' : 'bg-white text-gray-500'}`;
+            btn.onclick = () => {
+                document.querySelectorAll('.brand-btn').forEach(b => b.classList.remove('active-tab'));
+                btn.classList.add('active-tab');
+                fetchTabData(tab);
+                // تمرير التاب لمنتصف الشاشة عند الضغط (للآيباد)
+                btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            };
+            container.appendChild(btn);
+        });
+    }
 
-    // البحث
+    // محرك البحث
     document.getElementById('searchInput').addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
         const filtered = currentData.filter(row => 
@@ -118,8 +145,9 @@
         renderCards(filtered);
     });
 
-    // تحميل أول تابة تلقائياً
-    fetchTabData(brands[0]);
+    // الانطلاق
+    setupTabs();
+    fetchTabData(tabs[0]); // تحميل أول تابة تلقائياً
 </script>
 </body>
 </html>
