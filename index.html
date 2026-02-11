@@ -50,7 +50,7 @@
         grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-400 font-bold animate-pulse">جاري تحديث قائمة ' + tabName + '...</div>';
         
         // الرابط الذكي لجلب البيانات بصيغة JSON
-        const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tabName)}`;
+        const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&tq=select%20*&sheet=${encodeURIComponent(tabName)}`;
         
         try {
             const response = await fetch(url);
